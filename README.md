@@ -2,6 +2,7 @@
 
 [![Javadocs](http://www.javadoc.io/badge/net.sargue/mailgun.svg)](http://www.javadoc.io/doc/net.sargue/mailgun)
 [![Build Status](https://travis-ci.org/sargue/mailgun.svg?branch=master)](https://travis-ci.org/sargue/mailgun)
+[![Quality Gate](http://nemo.sonarqube.org/api/badges/gate?key=mailgun)](https://sonarqube.com/overview?id=mailgun)
 [![License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](http://www.opensource.org/licenses/MIT)
 [![Download](https://api.bintray.com/packages/sargue/maven/net.sargue%3Amailgun/images/download.svg)](https://bintray.com/sargue/maven/net.sargue%3Amailgun/_latestVersion)
 
@@ -28,7 +29,7 @@ Add the dependency to your project:
 
 #### Gradle
 
-`compile 'net.sargue:mailgun:1.1.0'`
+`compile 'net.sargue:mailgun:1.3.2'`
 
 #### Maven
 
@@ -36,7 +37,7 @@ Add the dependency to your project:
 <dependency>
     <groupId>net.sargue</groupId>
     <artifactId>mailgun</artifactId>
-    <version>1.1.0</version>
+    <version>1.3.2</version>
 </dependency>
 ```
 
@@ -57,7 +58,7 @@ and workarounds. Thanks for your understanding.
 
 The library is pretty straighforward. You just need to remember two classes:
 
-* `Configuration`: which usually is a singleton you build one and re-use
+* `Configuration`: which usually is a singleton you build once and re-use
 * `MailBuilder`: the entry point to build and send emails
 * `MailContent`: an optional helper to build HTML and text message bodys
 
@@ -78,6 +79,12 @@ published thanks to the great javadoc.io service.
 Requires Java 7+.
 
 Depends on [Jersey 2](https://jersey.java.net/) client.
+
+### Android support
+
+There is not. Android is not officially supported. I have no experience on Android development so I won't be able to help much on any issue. There are a [number of issues raised](https://github.com/sargue/mailgun/issues?q=label%3Aandroid) which indicate that the library *can* be used on Android but YMMV.
+
+Anyway try it and if you find a problem please report it. I will try to help.
 
 ### Configuration
 
@@ -172,6 +179,10 @@ Mail.using(configuration)
     .send();
 ```
 
+There is also a very powerful extension mechanism which are the *content 
+converters*. Check it out with some more information about the these
+ classes [in the wiki](https://github.com/sargue/mailgun/wiki/Mail-content-using-content-helpers).
+
 ## Changelog
 
 ### v1.0.0
@@ -211,6 +222,22 @@ Mail.using(configuration)
     .build()
     .send();
 ```
+
+### v1.2.0
+
+* New method to add inline images thanks to [Lance Reid](https://github.com/lancedfr). See [PR](https://github.com/sargue/mailgun/pull/5).
+
+### v1.3.0
+
+* New method to retrieve the body of the response. Useful to check more information in the event of errors.
+
+### v1.3.1
+
+* Merged PR [MailBuilder support for null name, to reduce burden of user](https://github.com/sargue/mailgun/pull/9)
+
+### v1.3.2
+
+* Fixed dependency: Jersey 2.25 as >2.26 targets Java EE 8 and Java 8 language level.
 
 ## Test suite
 

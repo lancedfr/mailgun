@@ -22,15 +22,15 @@ import java.util.Deque;
  */
 public class Builder {
     private static final String CRLF = "\r\n";
-    private static final String preHTML =
+    private static final String PRE_HTML =
         "<!DOCTYPE html><html><head>" + CRLF +
         "<meta name='viewport' content='width=device-width' />" +
         "<meta http-equiv='Content-Type' " +
         "content='text/html; charset=UTF-8' />" +
         "</head><body>" + CRLF;
-    private static final String postHTML = "<br></body></html>";
+    private static final String POST_HTML = "<br></body></html>";
 
-    private MessageBuilder html = new MessageBuilder().a(preHTML);
+    private MessageBuilder html = new MessageBuilder().a(PRE_HTML);
     private MessageBuilder text = new MessageBuilder();
     private Deque<String> ends = new ArrayDeque<>();
 
@@ -72,7 +72,7 @@ public class Builder {
         if (!ends.isEmpty())
             throw new IllegalStateException(
                 "Pending some closing. Some end() missing. ends=" + ends);
-        html.nl().a(postHTML);
+        html.nl().a(POST_HTML);
         text.nl();
         return new Body(html, text);
     }
@@ -311,7 +311,7 @@ public class Builder {
 
     /**
      * Opens a {@code <pre>} tag.
-     * <p/>
+     * <p>
      * @return this builder
      */
     public Builder pre() {
@@ -321,7 +321,7 @@ public class Builder {
     /**
      * Adds a {@code <pre>} block with text content. The plain text version will
      * get only the content.
-     * <p/>
+     * <p>
      * @param content the text content
      * @return this builder
      */
@@ -331,7 +331,7 @@ public class Builder {
 
     /**
      * Opens a {@code <em>} tag.
-     * <p/>
+     * <p>
      *
      * @return this builder
      */
@@ -352,7 +352,7 @@ public class Builder {
 
     /**
      * Opens a {@code <strong>} tag.
-     * <p/>
+     * <p>
      *
      * @return this builder
      */
@@ -404,6 +404,7 @@ public class Builder {
     /**
      * Adds a new row with one column.
      *
+     * @param <T>       the type parameter
      * @param firstCell the first cell content
      * @return this builder
      */
@@ -414,6 +415,7 @@ public class Builder {
     /**
      * Adds a new row with two columns.
      *
+     * @param <T>        the type parameter
      * @param firstCell  the first cell content
      * @param secondCell the second cell content
      * @return this builder
@@ -425,8 +427,9 @@ public class Builder {
     /**
      * Adds a new row with two columns, the first one being a header cell.
      *
-     * @param label  the header cell content
-     * @param data the second cell content
+     * @param <T>   the type parameter
+     * @param label the header cell content
+     * @param data  the second cell content
      * @return this builder
      */
     public <T> Builder rowh(String label, T data) {
@@ -436,6 +439,7 @@ public class Builder {
     /**
      * Adds a new row with three columns.
      *
+     * @param <T>        the type parameter
      * @param firstCell  the first cell content
      * @param secondCell the second cell content
      * @param thirdCell  the third cell content
@@ -454,6 +458,7 @@ public class Builder {
     /**
      * Adds a new row with four columns.
      *
+     * @param <T>        the type parameter
      * @param firstCell  the first cell content
      * @param secondCell the second cell content
      * @param thirdCell  the third cell content
@@ -493,6 +498,7 @@ public class Builder {
     /**
      * Adds a new cell with text content.
      *
+     * @param <T>     the type parameter
      * @param content the content to show inside the cell
      * @return this builder
      */
@@ -503,6 +509,7 @@ public class Builder {
     /**
      * Adds a new cell header with text content.
      *
+     * @param <T>     the type parameter
      * @param content the content to show inside the cell header
      * @return this builder
      */
@@ -512,13 +519,17 @@ public class Builder {
 
     private <T> Builder cell(T content, boolean lastCell) {
         cell().text(content).end();
-        if (!lastCell) text.a(',');
+        if (!lastCell) {
+            text.a(',');
+        }
         return this;
     }
 
     private Builder cellHeader(String label, boolean lastCell) {
         cellHeader().text(label).end();
-        if (!lastCell) text.a(',');
+        if (!lastCell) {
+            text.a(',');
+        }
         return this;
     }
 

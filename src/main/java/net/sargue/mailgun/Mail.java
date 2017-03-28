@@ -1,5 +1,7 @@
 package net.sargue.mailgun;
 
+import org.glassfish.jersey.client.JerseyClientBuilder;
+
 import javax.ws.rs.client.*;
 
 /**
@@ -82,7 +84,7 @@ public abstract class Mail {
         return configuration;
     }
 
-    abstract Entity<?> entity();
+    abstract Entity<?> entity(); //NOSONAR
 
     abstract void prepareSend();
 
@@ -91,7 +93,7 @@ public abstract class Mail {
     }
 
     private Invocation.Builder request() {
-        Client client = ClientBuilder.newClient();
+        Client client = JerseyClientBuilder.newClient();
         configureClient(client);
         return client
                 .register(configuration.httpAuthenticationFeature())

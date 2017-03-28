@@ -1,6 +1,7 @@
 package net.sargue.mailgun.test;
 
 import com.github.tomakehurst.wiremock.client.MappingBuilder;
+import com.github.tomakehurst.wiremock.client.RequestPatternBuilder;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import net.sargue.mailgun.Configuration;
 import net.sargue.mailgun.MailBuilder;
@@ -10,7 +11,6 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.message.BasicNameValuePair;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
@@ -20,8 +20,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static org.awaitility.Awaitility.await;
+import static org.junit.Assert.*;
 
 public class BasicTests {
     private static final String DOMAIN = "somedomain.com";
@@ -89,10 +93,10 @@ public class BasicTests {
             .build()
             .send();
 
-        Assert.assertTrue(response.isOk());
-        Assert.assertEquals(Response.ResponseType.OK,
-                            response.responseType());
-        Assert.assertEquals(200, response.responseCode());
+        assertTrue(response.isOk());
+        assertEquals(Response.ResponseType.OK,
+                     response.responseType());
+        assertEquals(200, response.responseCode());
 
         verifyMessageSent(
             param("to", "marty@mcfly.com"),
@@ -113,10 +117,32 @@ public class BasicTests {
             .build()
             .send();
 
-        Assert.assertTrue(response.isOk());
+        assertTrue(response.isOk());
 
         verifyMessageSent(
             param("from", mail("Doc Brown", "doc@delorean.com")),
+            param("to", "marty@mcfly.com"),
+            param("subject", "This is a plain text test"),
+            param("text", "Hello world!")
+        );
+    }
+
+    @Test
+    public void withNullName() {
+        stubFor(expectedBasicPost().willReturn(aResponse().withStatus(200)));
+
+        Response response = MailBuilder.using(configuration)
+            .from(null, "doc@delorean.com")
+            .to("marty@mcfly.com")
+            .subject("This is a plain text test")
+            .text("Hello world!")
+            .build()
+            .send();
+
+        assertTrue(response.isOk());
+
+        verifyMessageSent(
+            param("from", "doc@delorean.com"),
             param("to", "marty@mcfly.com"),
             param("subject", "This is a plain text test"),
             param("text", "Hello world!")
@@ -138,7 +164,7 @@ public class BasicTests {
                 .parameter("o:testmode", "yes")
                 .build()
                 .send();
-        Assert.assertTrue(response.isOk());
+        assertTrue(response.isOk());
 
         verifyMessageSent(
             param("from", "firstrandom@address.com"),
@@ -164,7 +190,7 @@ public class BasicTests {
             .html("Hello <strong>world</strong>!")
             .build()
             .send();
-        Assert.assertTrue(response.isOk());
+        assertTrue(response.isOk());
 
         verifyMessageSent(
             param("to", "doc@delorean.com"),
@@ -193,7 +219,7 @@ public class BasicTests {
                         "readme.txt")
             .build()
             .send();
-        Assert.assertTrue(response.isOk());
+        assertTrue(response.isOk());
 
         //TODO proper content checking
     }
@@ -202,9 +228,9 @@ public class BasicTests {
     public void sendWithInlineAttachment() {
         stubFor(post(urlEqualTo("/api/" + DOMAIN + "/messages"))
                 .withHeader("Authorization",
-                        equalTo("Basic " + expectedAuthHeader))
+                            equalTo("Basic " + expectedAuthHeader))
                 .withHeader("Content-Type",
-                        containing("multipart/form-data"))
+                            containing("multipart/form-data"))
                 .willReturn(aResponse().withStatus(200)));
 
         Response response = MailBuilder.using(configuration)
@@ -215,7 +241,7 @@ public class BasicTests {
                 .inline(new ByteArrayInputStream("MockBytes".getBytes()), "cartman.jpg")
                 .build()
                 .send();
-        Assert.assertTrue(response.isOk());
+        assertTrue(response.isOk());
 
         //TODO proper content checking
     }
@@ -232,8 +258,8 @@ public class BasicTests {
             .sendAsync(new MailRequestCallback() {
                 @Override
                 public void completed(Response response) {
-                    Assert.assertEquals(Response.ResponseType.OK,
-                                        response.responseType());
+                    assertEquals(Response.ResponseType.OK,
+                                 response.responseType());
 
                     verifyMessageSent(
                         param("to", "doc@delorean.com"),
@@ -244,19 +270,53 @@ public class BasicTests {
 
                 @Override
                 public void failed(Throwable throwable) {
-                    Assert.fail(throwable.getMessage());
+                    fail(throwable.getMessage());
                 }
             });
     }
 
     @Test
     public void sendAsyncFireAndForget() {
+        stubFor(expectedBasicPost().willReturn(aResponse().withStatus(200)));
         MailBuilder.using(configuration)
                    .to("doc@delorean.com")
                    .subject("This is a plain text test")
                    .text("Hello world!")
                    .build()
                    .sendAsync();
-        //TODO verificar que s'envia
+
+        final RequestPatternBuilder postRequestedFor = postRequestedFor(
+            urlEqualTo("/api/somedomain.com/messages"));
+        await().atMost(5, TimeUnit.SECONDS).until(new Callable<Boolean>() {
+            @Override
+            public Boolean call() throws Exception {
+                return !wireMockRule.findAll(postRequestedFor).isEmpty();
+            }
+        });
+
+        verify(postRequestedFor);
+    }
+
+    @Test
+    public void responsePayloadTest() {
+        String responseMessage =
+            "{ \"id\": \"" +
+            "<20160902095021.16212.7900.87F2C8F1@mydomain.com>" + "\", " +
+            "\"message\": \"" + "Queued. Thank you." + "\" }";
+        stubFor(expectedBasicPost().willReturn(
+            aResponse()
+                .withStatus(200)
+                .withBody(responseMessage)
+        ));
+
+        Response response = MailBuilder
+            .using(configuration)
+            .to("doc@delorean.com")
+            .subject("This is a plain text test")
+            .text("Hello world!")
+            .build()
+            .send();
+
+        assertEquals(responseMessage, response.responseMessage());
     }
 }
